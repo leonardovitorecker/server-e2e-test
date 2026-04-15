@@ -12,10 +12,23 @@ Ferramentas
   - Pulumi - Funciona em todas as clouds, agnostica
   - AppRunner - Um serviço simples para executar container
 
-ECS 
+ECS - Elastic container service
+ - Cluster - agregado de classes de trabalho - Task e Service
+ - Task definition - Modelo da aplicação
+  - EC2 - PERMITE TRABALHAR COM EC2
+  - Fargate - Otimiza os custos(serveless)
   VPC 
   Subnet
   route table
   internet e NAT gateway
   LoadBalancer
   Container efemuro - Tudo oque for persistido nele sera perdido ao remove-lo
+
+VPC - por si só é uma rede privada
+internet Gateway - Permite que receba trafego da internet
+Route table - Regra de roteamento
+Subnet (MultiAZ)
+
+Load LoadBalancer 
+Multi replicas
+Ponto de acesso unico, e gerenciador de trafego, equalizando as chamadas entre as replicas
