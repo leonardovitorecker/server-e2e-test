@@ -82,6 +82,13 @@ jobs:
           tags: |
             ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
 
+      - name: Download current task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.TASK_DEF_FAMILY }} \
+            --query taskDefinition | jq 'del(.taskDefinitionArn, .revision, .status, .compatibilities, .requiresAttributes, .enableFaultInjection)' \
+            > .aws/task-definition.json
+
       - name: Render Amazon ECS task definition
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
