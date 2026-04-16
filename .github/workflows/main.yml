@@ -87,13 +87,13 @@ jobs:
           aws ecs describe-task-definition \
             --task-definition ${{ env.TASK_DEF_FAMILY }} \
             --query taskDefinition | jq 'del(.taskDefinitionArn, .revision, .status, .compatibilities, .requiresAttributes, .enableFaultInjection)' \
-            > .aws/task-definition.json
+            > task-definition.json
 
       - name: Render Amazon ECS task definition
         id: render-task-definition
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: .aws/task-definition.json
+          task-definition: task-definition.json
           container-name: widget-server
           image: ${{steps.login-ecr.outputs.registry}}/${{ vars.ECR_REPOSITORY }}:${{ steps.generate-tag.outputs.sha }}
 
