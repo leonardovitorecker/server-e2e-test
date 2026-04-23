@@ -31,7 +31,7 @@ jobs:
         run: |
           pnpm install
       - name: Run migrations
-        run: db:migrate:test
+        run: npx dotenv -e .env -- drizzle-kit migrate
         env:
           DATABASE_URL: postgresql://postgres.isxzyggjjpkinczdukdj:wyCki3MZN9W@aws-1-us-east-2.pooler.supabase.com:6543/postgres
           CLOUDFLARE_ACCOUNT_ID: e8d83019b8968eeb453dc1f44f6a1a44
