@@ -9,6 +9,34 @@ jobs:
   Test:
     name: Test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      minio:
+        image: bitnami/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       - name: Checkout
         id: checkout
@@ -26,31 +54,44 @@ jobs:
         with:
           version: 8
 
+      - name: Cache pnpm store
+        uses: actions/cache@v4
+        with:
+          path: ~/.pnpm-store
+          key: ${{ runner.os }}-pnpm-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-
+
       - name: Install dependencies
         id: install-dependencies
         run: |
           pnpm install
+
+      - name: Create test bucket
+        run: |
+          aws configure set aws_access_key_id minioadmin
+          aws configure set aws_secret_access_key minioadmin
+          aws --endpoint-url http://localhost:9000 s3 mb s3://upload-server
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+
       - name: Run migrations
         run: npx dotenv -e .env -- drizzle-kit migrate
         env:
-          DATABASE_URL: postgresql://postgres.isxzyggjjpkinczdukdj:wyCki3MZN9W@aws-1-us-east-2.pooler.supabase.com:6543/postgres
-          CLOUDFLARE_ACCOUNT_ID: e8d83019b8968eeb453dc1f44f6a1a44
-          CLOUDFLARE_ACCESS_KEY_ID: "110236049e817e28a017ced85d425e8b"
-          CLOUDFLARE_SECRET_ACCESS_KEY: "2be7f675c47cf2bcc50be412e6ac4e02b754705aa8a07120ced1690c510d527b"
-          CLOUDFLARE_BUCKET: upload-server
-          CLOUDFLARE_PUBLIC_URL: "https://pub-04c4f7e4faaf4588ba9d22736fc4cdc1.r2.dev"
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
 
       - name: Run tests
         id: run-tests
         run: |
           pnpm test
         env:
-          DATABASE_URL: postgresql://postgres.isxzyggjjpkinczdukdj:wyCki3MZN9W@aws-1-us-east-2.pooler.supabase.com:6543/postgres
-          CLOUDFLARE_ACCOUNT_ID: e8d83019b8968eeb453dc1f44f6a1a44
-          CLOUDFLARE_ACCESS_KEY_ID: "110236049e817e28a017ced85d425e8b"
-          CLOUDFLARE_SECRET_ACCESS_KEY: "2be7f675c47cf2bcc50be412e6ac4e02b754705aa8a07120ced1690c510d527b"
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+          CLOUDFLARE_ACCOUNT_ID: local
+          CLOUDFLARE_ACCESS_KEY_ID: minioadmin
+          CLOUDFLARE_SECRET_ACCESS_KEY: minioadmin
           CLOUDFLARE_BUCKET: upload-server
-          CLOUDFLARE_PUBLIC_URL: "https://pub-04c4f7e4faaf4588ba9d22736fc4cdc1.r2.dev"
+          CLOUDFLARE_PUBLIC_URL: http://localhost:9000/upload-server
+          CLOUDFLARE_ENDPOINT: http://localhost:9000
           NODE_ENV: test
 
   Build:
