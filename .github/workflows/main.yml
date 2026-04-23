@@ -81,6 +81,13 @@ jobs:
         run: npx dotenv -e .env -- drizzle-kit migrate
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
+          CLOUDFLARE_ACCOUNT_ID: local
+          CLOUDFLARE_ACCESS_KEY_ID: minioadmin
+          CLOUDFLARE_SECRET_ACCESS_KEY: minioadmin
+          CLOUDFLARE_BUCKET: upload-server
+          CLOUDFLARE_PUBLIC_URL: http://localhost:9000/upload-server
+          CLOUDFLARE_ENDPOINT: http://localhost:9000
+          NODE_ENV: test
 
       - name: Run tests
         id: run-tests
